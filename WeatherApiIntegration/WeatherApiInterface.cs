@@ -2,5 +2,6 @@
 {
     public interface WeatherApiInterface
     {
+        public Task<string> GetWeatherAsync(string city);
     }
 }

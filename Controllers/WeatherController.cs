@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using qui_test_api.WeatherApiIntegration.OpenWeatherApi;
+using Microsoft.EntityFrameworkCore;
+using qui_test_api.Database;
+using qui_test_api.Models;
+using qui_test_api.WeatherApiIntegration;
 
 namespace qui_test_api.Controllers
 {
@@ -7,17 +10,37 @@ namespace qui_test_api.Controllers
     [Route("api/[controller]")]
     public class WeatherController : ControllerBase
     {
-        private readonly OpenWeatherApiService _weatherService;
+        private readonly WeatherApiInterface _weatherService;
+        private readonly HistoryContext _databaseContext;
 
-        public WeatherController(OpenWeatherApiService weatherService)
+        public WeatherController(WeatherApiInterface weatherService, HistoryContext databaseContext)
         {
             _weatherService = weatherService;
+            _databaseContext = databaseContext;
         }
 
         [HttpGet("search/{city}")]
         public async Task<IActionResult> GetWeather(string city)
         {
+            var userIdentifier = Request.Headers["User-Identifier"].ToString();
+
+            if (string.IsNullOrWhiteSpace(userIdentifier))
+            {
+                return BadRequest("User identifier is missing");
+            }
+            
             var weather = await _weatherService.GetWeatherAsync(city);
+            var userRequestData = new HistoryRecord()
+            {
+                Id = Guid.NewGuid(),
+                CityName = city,
+                QueryDate = DateTime.UtcNow,
+                UserIdentifier = userIdentifier,
+                WeatherData = weather
+            };
+
+            _databaseContext.Add(userRequestData);
+            await _databaseContext.SaveChangesAsync();
 
             if (weather != null)
             {
@@ -25,6 +48,20 @@ namespace qui_test_api.Controllers
             }
 
             return NotFound();
+        }
+
+        [HttpGet("history")]
+        public async Task<IActionResult> GetUserHistory()
+        {
+            var userIdentifier = Request.Headers["User-Identifier"].ToString();
+            if (string.IsNullOrWhiteSpace(userIdentifier))
+            {
+                return BadRequest("User identifier is missing");
+            }
+
+            var userHistory = await _databaseContext.HistoryRecords.Where(r => r.UserIdentifier == userIdentifier).ToListAsync();
+
+            return Ok(userHistory);
         }
     }
 

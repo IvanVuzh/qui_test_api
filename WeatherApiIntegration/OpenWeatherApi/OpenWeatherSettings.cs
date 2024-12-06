@@ -3,6 +3,6 @@
     public class OpenWeatherSettings
     {
         public string ApiKey { get; set; }
-        public string BaseUrl { get; set; } = "http://api.openweathermap.org/data/2.5/";
+        public string BaseUrl { get; set; } = "https://api.openweathermap.org/data/2.5/";
     }
 }
