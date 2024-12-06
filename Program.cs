@@ -1,5 +1,5 @@
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
-
 using qui_test_api.Controllers;
 using qui_test_api.Database;
 using qui_test_api.WeatherApiIntegration;
@@ -23,22 +23,29 @@ builder.Services.AddDbContext<HistoryContext>(options =>
 builder.WebHost.UseUrls("https://localhost:5001", "http://localhost:5000");
 
 // Add services to the container.
-builder.Services.AddControllers(); 
+builder.Services.AddControllers();
 
-builder.Services.Configure<OpenWeatherSettings>(builder.Configuration.GetSection("OpenWeatherSettings")); 
+builder.Services.Configure<OpenWeatherSettings>(builder.Configuration.GetSection("OpenWeatherSettings"));
 
-builder.Services.AddHttpClient(); 
+builder.Services.AddHttpClient();
 
 builder.Services.AddScoped<WeatherApiInterface, OpenWeatherApiService>();
 
-builder.Services.AddMemoryCache(); 
+builder.Services.AddMemoryCache();
 
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddTransient<WeatherController>();
 
-builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddApiVersioning(options =>
+{
+    options.ReportApiVersions = true;
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.ApiVersionReader = new UrlSegmentApiVersionReader();
+});
 
 var app = builder.Build();
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using qui_test_api.Database;
 using qui_test_api.Models;
@@ -7,7 +8,8 @@ using qui_test_api.WeatherApiIntegration;
 namespace qui_test_api.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}")]
+    [ApiVersion("1.0")]
     public class WeatherController : ControllerBase
     {
         private readonly WeatherApiInterface _weatherService;
@@ -22,6 +24,7 @@ namespace qui_test_api.Controllers
         [HttpGet("search/{city}")]
         public async Task<IActionResult> GetWeather(string city)
         {
+            Thread.Sleep(2000); // check loader
             var userIdentifier = Request.Headers["User-Identifier"].ToString();
 
             if (string.IsNullOrWhiteSpace(userIdentifier))
