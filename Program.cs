@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
+using qui_test_api;
 using qui_test_api.Controllers;
 using qui_test_api.Database;
 using qui_test_api.WeatherApiIntegration;
@@ -55,6 +56,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseErrorHandlingMiddleware();
 
 app.UseCors("AllowReactApp");
 

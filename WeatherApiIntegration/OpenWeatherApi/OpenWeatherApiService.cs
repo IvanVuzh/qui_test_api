@@ -27,6 +27,7 @@ public class OpenWeatherApiService: WeatherApiInterface
     public async Task<string> GetWeatherAsync(string city)
     {
         string cacheKey = $"Weather_for_{city}";
+
         if (_cache.TryGetValue(cacheKey, out string weather))
         {
             return weather;
@@ -49,19 +50,24 @@ public class OpenWeatherApiService: WeatherApiInterface
             }
             else
             {
-                _logger.LogError($"Failed to get weather data. Status code: {response.StatusCode}");
-                return null;
+                var errorContent = await response.Content.ReadAsStringAsync();
+                var statusCode = response.StatusCode;
+
+                _logger.LogError("Failed to get weather data. Status code: {StatusCode}, Response: {ErrorContent}", statusCode, errorContent);
+
+                throw new HttpRequestException($"Request failed with status code {statusCode} and response: {errorContent}");
             }
         }
         catch (HttpRequestException ex)
         {
             _logger.LogError(ex, $"HTTP request error while getting weather data for city {city}");
-            throw new Exception("Unable to retrieve weather data due to a network issue. Please try again later.", ex);
+            throw;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, $"Unexpected error while getting weather data for city {city}");
-            throw new Exception("An unexpected error occurred while retrieving weather data. Please try again later.", ex);
+            throw;
         }
     }
+
 }

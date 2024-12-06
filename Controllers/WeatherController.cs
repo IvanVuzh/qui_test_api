@@ -24,34 +24,57 @@ namespace qui_test_api.Controllers
         [HttpGet("search/{city}")]
         public async Task<IActionResult> GetWeather(string city)
         {
-            Thread.Sleep(2000); // check loader
             var userIdentifier = Request.Headers["User-Identifier"].ToString();
 
             if (string.IsNullOrWhiteSpace(userIdentifier))
             {
-                return BadRequest("User identifier is missing");
-            }
-            
-            var weather = await _weatherService.GetWeatherAsync(city);
-            var userRequestData = new HistoryRecord()
-            {
-                Id = Guid.NewGuid(),
-                CityName = city,
-                QueryDate = DateTime.UtcNow,
-                UserIdentifier = userIdentifier,
-                WeatherData = weather
-            };
-
-            _databaseContext.Add(userRequestData);
-            await _databaseContext.SaveChangesAsync();
-
-            if (weather != null)
-            {
-                return Ok(weather);
+                return BadRequest(new ErrorResponse
+                {
+                    Status = 400,
+                    Message = "Bad Request",
+                    Details = "User identifier is missing"
+                });
             }
 
-            return NotFound();
+            try
+            {
+                var weather = await _weatherService.GetWeatherAsync(city);
+
+                if (weather != null)
+                {
+                    var userRequestData = new HistoryRecord
+                    {
+                        Id = Guid.NewGuid(),
+                        CityName = city,
+                        QueryDate = DateTime.UtcNow,
+                        UserIdentifier = userIdentifier,
+                        WeatherData = weather
+                    };
+
+                    _databaseContext.Add(userRequestData);
+                    await _databaseContext.SaveChangesAsync();
+
+                    return Ok(weather);
+                }
+
+                return NotFound(new ErrorResponse
+                {
+                    Status = 404,
+                    Message = "Not Found",
+                    Details = $"Weather data for city {city} not found."
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ErrorResponse
+                {
+                    Status = 500,
+                    Message = "Internal Server Error",
+                    Details = ex.Message
+                });
+            }
         }
+
 
         [HttpGet("history")]
         public async Task<IActionResult> GetUserHistory()
