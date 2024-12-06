@@ -21,8 +21,6 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<HistoryContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("default")));
 
-builder.WebHost.UseUrls("https://localhost:5001", "http://localhost:5000");
-
 // Add services to the container.
 builder.Services.AddControllers();
 
